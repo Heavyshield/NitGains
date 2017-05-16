@@ -10,6 +10,7 @@ import app::data_store
 import android::aware
 import nitGains_logic
 
+
 redef class App
 	redef fun on_create
 	do
