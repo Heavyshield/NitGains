@@ -4,13 +4,27 @@ import app::ui
 import app::data_store
 import android::aware
 import nitGains_data
+import date
 
 
 
+class Horloge
+
+	super Button
+
+end
+
+class HorlogeEvent
+
+super ViewEvent
+redef type VIEW: Horloge
+
+end
 
 class TabataWindow
 	super Window
 
+	var horloge_time = new Time(0,0,30)
 
 	#Root layout
 	var root_layout = new VerticalLayout(parent=self)
@@ -36,28 +50,29 @@ class TabataWindow
 	var h2_layout = new HorizontalLayout(parent=mid_v2)
 	var h3_layout = new VerticalLayout(parent=mid_v2)
 
-	#Values
-	var timer_value = "00:00"
-	var round_value = "1"
-	var preparation_value = "15"
-	var rest_value = "30"
-	var exercise_value = "5"
-	var break_value = "||"
-	var play_value = "->"
-
 	#Buttons
-	var timer_button = new Button(parent=mid_v1, text=timer_value)
-	var round_button = new Button(parent=h_layout, text=round_value)
-	var preparation_button = new Button(parent=h1_layout, text=preparation_value)
-	var rest_button = new Button(parent=h2_layout, text=rest_value)
-	var exercise_button = new Button(parent=h3_layout, text=exercise_value)
-	var break_button = new Button(parent=bot_v1, text=break_value, size=1.5)
-	var play_button = new Button(parent=bot_v2, text=play_value, size=1.5)
+	var timer_button = new Horloge(parent=mid_v1, text=horloge_time.second.to_s)
+	var round_button = new Button(parent=h_layout, text="1")
+	var preparation_button = new Button(parent=h1_layout, text="15")
+	var rest_button = new Button(parent=h2_layout, text="30")
+	var exercise_button = new Button(parent=h3_layout, text="5")
+	var break_button = new Button(parent=bot_v1, text="||", size=1.5)
+	var play_button = new Button(parent=bot_v2, text="->", size=1.5)
+
+
+
+	#Horloge manuel Todo thread nit pour la generation d'events
+	
+	var timer_decrement = new Button(parent=mid_v1, text="<-")
+	
+	#----------------------------------------------------------
 
 
 
 	redef fun on_event(event)
 	do 
+
+
 		if event isa ButtonPressEvent then
 			if event.sender == round_button then
 			push_button_window(new ParameterData("round",round_button.text.to_i))
@@ -71,6 +86,16 @@ class TabataWindow
 			else if event.sender == exercise_button then
 			push_button_window(new ParameterData("exercise",round_button.text.to_i))
 
+			else if event.sender == timer_button then
+			print "event"
+			
+
+			end
+
+		else if event isa HorlogeEvent then
+			if event.sender == timer_decrement then
+			horloge_time = new Time(0,0,horloge_time.second - 1)
+			timer_button.text = horloge_time.second.to_s
 			end
 		end
 	end
@@ -87,6 +112,7 @@ class TabataWindow
 
 		app.push_window button_window
 	end
+
 end
 
 class TimerWindow
