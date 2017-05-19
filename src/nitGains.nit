@@ -14,7 +14,7 @@ import nitGains_logic
 redef class App
 	redef fun on_create
 	do
-		push_window new TabataWindow
+		push_window new TabataWindow(null)
 		super
 	end
 end

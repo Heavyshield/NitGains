@@ -2,7 +2,8 @@ module nitGains_data
 
 class ParameterData
 
-	var parameter_name: String
-	var parameter_value: Int
+	var name: String
+	var value: Int is public writable
 
 end
+

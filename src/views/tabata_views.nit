@@ -10,7 +10,9 @@ import date
 
 class Horloge
 
-	super Button
+	#super TextView
+	 super Button
+	#var native = new NativeService
 
 end
 
@@ -25,6 +27,18 @@ class TabataWindow
 	super Window
 
 	var horloge_time = new Time(0,0,30)
+	var current_state = "config"
+	
+	#ParameterData
+	var timer_data = new ParameterData("time",30)
+	var round_data = new ParameterData("round",1)
+	var preparation_data  = new ParameterData("preparation",15)
+	var rest_data = new ParameterData("rest",30)
+	var exercise_data = new ParameterData("exercise",5)
+	var duration_data = new ParameterData("duration",30)
+	
+	var parameter_list : nullable Array[ParameterData]
+	#var parameter_list = new Array[timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data]
 
 	#Root layout
 	var root_layout = new VerticalLayout(parent=self)
@@ -52,12 +66,12 @@ class TabataWindow
 
 	#Buttons
 	var timer_button = new Horloge(parent=mid_v1, text=horloge_time.second.to_s)
-	var round_button = new Button(parent=h_layout, text="1")
-	var preparation_button = new Button(parent=h1_layout, text="15")
-	var rest_button = new Button(parent=h2_layout, text="30")
-	var exercise_button = new Button(parent=h3_layout, text="5")
-	var break_button = new Button(parent=bot_v1, text="||", size=1.5)
-	var play_button = new Button(parent=bot_v2, text="->", size=1.5)
+	var round_button = new Button(parent=h_layout, text=round_data.value.to_s)
+	var preparation_button = new Button(parent=h1_layout, text=preparation_data.value.to_s)
+	var rest_button = new Button(parent=h2_layout, text=rest_data.value.to_s)
+	var exercise_button = new Button(parent=h3_layout, text=exercise_data.value.to_s)
+	var play_break_button = new Button(parent=bot_v1, text="->", size=1.5)
+	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
 
 
 
@@ -68,49 +82,110 @@ class TabataWindow
 	#----------------------------------------------------------
 
 
+	init
+	do
+		#Rebint parameterData with parameter_list
+		if parameter_list == null then
+			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data]
+
+		end
+
+	end
+
+	fun refresh_parameter
+	do
+	#pb dans le refresh
+			for parameter in parameter_list do
+				if parameter.name == "time" then
+				timer_data = parameter
+				else if parameter.name == "round" then
+				round_data = parameter
+				else if parameter.name == "preparation" then
+				preparation_data = parameter
+				else if parameter.name == "rest" then
+				rest_data = parameter
+				else if parameter.name == "exercise" then
+				exercise_data = parameter
+				end
+			end
+			print "round data value"
+			print round_data.value
+	end
+
+	fun refresh_view
+	do
+		timer_button.text = timer_data.value.to_s
+		round_button.text = round_data.value.to_s
+		preparation_button.text = preparation_data.value.to_s
+		rest_button.text = rest_data.value.to_s
+		exercise_button.text = exercise_data.value.to_s
+	end
+
+	fun restore_window(parameters: Array[ParameterData])
+	do
+	#TODO parameters est null Warning
+		print "restore"
+		print parameters
+
+		for parameter in parameters
+			do
+				print parameter.name
+				print parameter.value
+			end
+
+			parameter_list = parameters
+			refresh_parameter
+			refresh_view
+
+	end
+
 
 	redef fun on_event(event)
 	do 
 
 
 		if event isa ButtonPressEvent then
-			if event.sender == round_button then
-			push_button_window(new ParameterData("round",round_button.text.to_i))
 
-			else if event.sender == preparation_button then
-			push_button_window(new ParameterData("preparation",round_button.text.to_i))
+			#Fake event on horloge_time déclanche l'event en cliquant sur l'horloge
+			if event.sender isa Horloge then
+				if horloge_time.second == 0 then
+					print "next_state "
+					next_state
+				end
 
-			else if event.sender == rest_button then
-			push_button_window(new ParameterData("rest",round_button.text.to_i))
+			else if event.sender isa Button then
 
-			else if event.sender == exercise_button then
-			push_button_window(new ParameterData("exercise",round_button.text.to_i))
+					if event.sender == round_button then
 
-			else if event.sender == timer_button then
-			print "event"
-			
+					app.push_window new ButtonWindow(null, round_data, parameter_list )
 
-			end
+					else if event.sender == preparation_button then
 
-		else if event isa HorlogeEvent then
-			if event.sender == timer_decrement then
-			horloge_time = new Time(0,0,horloge_time.second - 1)
-			timer_button.text = horloge_time.second.to_s
+					app.push_window new ButtonWindow(null, preparation_data, parameter_list)
+
+					else if event.sender == rest_button then
+
+					app.push_window new ButtonWindow(null, rest_data, parameter_list)
+
+					else if event.sender == exercise_button then
+
+					app.push_window new ButtonWindow(null, exercise_data,parameter_list)
+
+					else if event.sender == reset_button then
+
+					app.push_window new TabataWindow(null)
+
+					else if event.sender == timer_decrement then
+					horloge_time = new Time(0,0,horloge_time.second - 1)
+					timer_button.text = horloge_time.second.to_s
+					end
 			end
 		end
 	end
 
-	fun push_button_window(parameter_data : ParameterData )
+	fun next_state
 	do
-		var button_window = new ButtonWindow
-		button_window.button_data = parameter_data
-		button_window.button_value.text = parameter_data.parameter_value.to_s
 
-		print "button data send"
-		print parameter_data.parameter_name
-		print parameter_data.parameter_value
-
-		app.push_window button_window
 	end
 
 end
@@ -126,32 +201,25 @@ end
 class ButtonWindow
 	super Window
 
-	var button_data = new ParameterData("",0)
-	var tabata_context = new TabataWindow
+	public var button_data:  ParameterData 
+	var parameter_list : nullable Array[ParameterData]
+
 
 	var root_layout = new VerticalLayout(parent=self)
 	var set_value_layout = new HorizontalLayout(parent=root_layout)
 	var previous_value = new Button(parent=set_value_layout, text="<")
-	var button_value = new Button(parent=set_value_layout, text=button_data.parameter_value.to_s)
-	var next_value = new Button(parent=set_value_layout, text=">")
+	var button_value =  new Button(parent=set_value_layout, text=button_data.value.to_s) is lateinit
+	var next_value = new Button(parent=set_value_layout, text=">") is lateinit
 	var back = new Button(parent=root_layout, text="back", size=1.5)
 
-	fun restore_tabata_window
+	fun refresh_parameter_list : Array[ParameterData]
 	do
-		if button_data.parameter_name == "round" then
-		tabata_context.round_button.text = button_value.text
-		
-		else if button_data.parameter_name == "preparation" then
-		tabata_context.preparation_button.text = button_value.text
-		
-		else if button_data.parameter_name == "rest" then
-		tabata_context.rest_button.text = button_value.text
-
-		else if button_data.parameter_name == "exercise" then
-		tabata_context.exercise_button.text = button_value.text
-
+		for parameter in parameter_list do
+			if parameter.name == button_data.name then
+				parameter = button_data
+			end
 		end
-		app.push_window tabata_context
+		return parameter_list.as(Array[ParameterData])
 	end
 
 	redef fun on_event(event)
@@ -161,17 +229,22 @@ class ButtonWindow
 
 			#automatiser la selection du bouton
 			if event.sender == back then
-				self.restore_tabata_window
-				
+
+				var tabata_window = new TabataWindow
+
+				tabata_window.restore_window(refresh_parameter_list)
+
+				app.push_window tabata_window
+
 			else if event.sender == previous_value then
 
-			var value = button_value.text.to_i - 1
-				button_value.text = value.to_s
+				button_data.value += -1
+				button_value.text = button_data.value.to_s
 
 			else if event.sender == next_value then
 
-				var value = button_value.text.to_i + 1
-				button_value.text = value.to_s
+				button_data.value += 1
+				button_value.text = button_data.value.to_s
 
 			end
 
