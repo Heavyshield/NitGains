@@ -5,8 +5,9 @@ import app::data_store
 import android::aware
 import nitGains_data
 import date
+import nitGains_timer
 
-class Horloge
+class Clock
 
 	#super TextView
 	 super Button
@@ -14,10 +15,10 @@ class Horloge
 
 end
 
-class HorlogeEvent
+class ClockEvent
 
 super ViewEvent
-redef type VIEW: Horloge
+redef type VIEW: Clock
 
 end
 
@@ -26,17 +27,17 @@ class TabataWindow
 	
 	#ParameterData
 	var timer_data = new ParameterData("time",10)
-	var round_data = new ParameterData("round",1)
+	var round_data = new ParameterData("round",2)
 	var preparation_data  = new ParameterData("preparation",10)
 	var rest_data = new ParameterData("rest",10)
-	var exercise_data = new ParameterData("exercise",5)
+	var exercise_data = new ParameterData("exercise",2)
 	var duration_data = new ParameterData("duration",10)
 	
 	#Contain all parameters data, round, exercise , rest etc...
 	var parameter_list : nullable Array[ParameterData]
 
 	#Current_state 
-	var horloge_time = new Time(0,0,preparation_data.value)
+	var clock_time = new Time(0,0,preparation_data.value)
 	var current_state = "config"
 	var remaining_round : Int = round_data.value
 	var remaining_exercise : Int = exercise_data.value
@@ -76,7 +77,7 @@ class TabataWindow
 	var duration_label = new Label(parent=h5_layout, text="duration")
 
 	#Buttons
-	var timer_button = new Horloge(parent=mid_v1, text=horloge_time.second.to_s)
+	var timer_button = new Clock(parent=mid_v1, text=clock_time.second.to_s)
 	var round_button = new Button(parent=h1_layout, text=round_data.value.to_s)
 	var preparation_button = new Button(parent=h2_layout, text=preparation_data.value.to_s)
 	var rest_button = new Button(parent=h3_layout, text=rest_data.value.to_s)
@@ -86,12 +87,16 @@ class TabataWindow
 	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
 
 
-	#Horloge manuel Todo thread nit pour la generation d'events
+	#manual clock Todo thread nit pour la generation d'events
 	var timer_decrement = new Button(parent=mid_v1, text="<-")
 
 	init
 	do
-		#Rebint parameterData with parameter_list
+		#Todo
+		#var thread = new Timer(new Time(0,0,1))
+		var thread = new Timer
+		thread.start
+		#Rebind parameterData with parameter_list
 		if parameter_list == null then
 			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data]
 
@@ -149,14 +154,14 @@ class TabataWindow
 	do 
 		if event isa ButtonPressEvent then
 
-			#Fake event on horloge_time déclanche l'event en cliquant sur l'horloge
-			if event.sender isa Horloge then
+			#Fake event on clock_time déclanche l'event en cliquant sur clock
+			if event.sender isa Clock then
 
-				if horloge_time.second == 0 then
+				if clock_time.second == 0 then
 					print "next_state "
 					next_state
 				else
-					print "time is :" + horloge_time.second.to_s 
+					print "time is :" + clock_time.second.to_s 
 				end
 
 			else if event.sender isa Button then
@@ -179,17 +184,15 @@ class TabataWindow
 					else if event.sender == reset_button then
 					app.push_window new TabataWindow(null)
 
-					else if event.sender == timer_decrement and horloge_time.second > 0 then
-					horloge_time = new Time(0,0,horloge_time.second - 1)
-					timer_button.text = horloge_time.second.to_s
+					else if event.sender == timer_decrement and clock_time.second > 0 then
+					clock_time = new Time(0,0,clock_time.second - 1)
+					timer_button.text = clock_time.second.to_s
 
 					end
 			end
 		end
 	end
 
-
-#TODO prendre en compte la data round > 0, exercise > 0
 	fun next_state
 	do
 		print "remaining_round :" + remaining_round.to_s
@@ -197,35 +200,35 @@ class TabataWindow
 
 		if current_state == "config" then
 			current_state = "preparation"
-			horloge_time = new Time(0,0,preparation_data.value)
-			timer_button.text = horloge_time.second.to_s
+			clock_time = new Time(0,0,preparation_data.value)
+			timer_button.text = clock_time.second.to_s
 			print "preparation"
 
 		else if current_state == "preparation" then
 			current_state = "exercise"
-			horloge_time = new Time(0,0,duration_data.value)
-			timer_button.text = horloge_time.second.to_s
+			clock_time = new Time(0,0,duration_data.value)
+			timer_button.text = clock_time.second.to_s
 			print "exercise"
 
 		else if current_state == "rest" then
 			current_state = "exercise"
-			horloge_time = new Time(0,0,duration_data.value)
-			timer_button.text = horloge_time.second.to_s
+			clock_time = new Time(0,0,duration_data.value)
+			timer_button.text = clock_time.second.to_s
 
 		else if current_state == "exercise" then
 			if remaining_exercise > 0 then
 				current_state = "rest"
 				remaining_exercise += -1
-				horloge_time = new Time(0,0,rest_data.value)
-				timer_button.text = horloge_time.second.to_s
+				clock_time = new Time(0,0,rest_data.value)
+				timer_button.text = clock_time.second.to_s
 				print "rest"
 
 			else
 				if remaining_round > 0 then
 					current_state = "preparation"
 					remaining_round += -1
-					horloge_time = new Time(0,0,preparation_data.value)
-					timer_button.text = horloge_time.second.to_s
+					clock_time = new Time(0,0,preparation_data.value)
+					timer_button.text = clock_time.second.to_s
 					print "preparation"
 
 				else 
@@ -244,6 +247,7 @@ end
 
 	fun play_action
 	do
+
 	end
 
 	fun break_action
