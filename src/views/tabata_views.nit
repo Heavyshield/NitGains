@@ -7,13 +7,7 @@ import nitGains_data
 import date
 import nitGains_timer
 
-class Clock
 
-	#super TextView
-	 super Button
-	#var native = new NativeService
-
-end
 
 class ClockEvent
 
@@ -86,16 +80,8 @@ class TabataWindow
 	var play_break_button = new Button(parent=bot_v1, text="->", size=1.5)
 	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
 
-
-	#manual clock Todo thread nit pour la generation d'events
-	var timer_decrement = new Button(parent=mid_v1, text="<-")
-
 	init
 	do
-		#Todo
-		#var thread = new Timer(new Time(0,0,1))
-		var thread = new Timer
-		thread.start
 		#Rebind parameterData with parameter_list
 		if parameter_list == null then
 			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data]
@@ -153,18 +139,8 @@ class TabataWindow
 	redef fun on_event(event)
 	do 
 		if event isa ButtonPressEvent then
-
-			#Fake event on clock_time déclanche l'event en cliquant sur clock
-			if event.sender isa Clock then
-
-				if clock_time.second == 0 then
-					print "next_state "
-					next_state
-				else
-					print "time is :" + clock_time.second.to_s 
-				end
-
-			else if event.sender isa Button then
+					
+					if event.sender isa Button then
 
 					if event.sender == round_button then
 					app.push_window new ButtonWindow(null, round_data, parameter_list )
@@ -184,10 +160,8 @@ class TabataWindow
 					else if event.sender == reset_button then
 					app.push_window new TabataWindow(null)
 
-					else if event.sender == timer_decrement and clock_time.second > 0 then
-					clock_time = new Time(0,0,clock_time.second - 1)
-					timer_button.text = clock_time.second.to_s
-
+					else if event.sender == play_break_button then
+					play_action
 					end
 			end
 		end
@@ -243,16 +217,27 @@ class TabataWindow
 		end
 	end
 
-end
 
 	fun play_action
 	do
+		next_state
+
+		var timer = new Timer(timer_button,new Time(0,0,0))
+
+		if current_state == "preparation" then
+			timer = new Timer(timer_button,new Time(0,0,preparation_data.value))
+		end
+
+		timer.start
 
 	end
 
 	fun break_action
 	do
 	end
+
+
+end
 
 class TimerWindow
 	super Window
