@@ -3,6 +3,7 @@ module nitGains_timer
 import date
 import pthreads
 import app::ui
+import app::http_request
 
 
 # Thread implementation for Timer (Clock,Time)
@@ -35,7 +36,9 @@ class Timer
 			i = i -1
 			print i
 			text = i.to_s
-			clock.text = text
+			var task = new RefreshView(clock,text)
+			app.run_on_ui_thread(task)
+			#clock.text = text
 
 				if i == 0 then
 				 	break
@@ -44,6 +47,25 @@ class Timer
 		return "next state"
 	end
 
+
+	#redef fun run_on_ui_thread(task)
+	#do
+
+	#end
+
+end
+
+
+class RefreshView
+	super Task
+
+	var target : Clock
+	var value : String
+
+	redef fun main
+	do
+		target.text = value
+	end
 
 end
 
