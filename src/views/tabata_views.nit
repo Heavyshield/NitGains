@@ -4,38 +4,30 @@ import app::ui
 import app::data_store
 import android::aware
 import nitGains_data
+import configurable_view
 import date
-import nitGains_timer
+import configurable_window
+import parameter_window
+import success_window
+import timer_model
 
 
-
-
-class ClockEvent
-
-super ViewEvent
-redef type VIEW: Clock
-
-end
 
 class TabataWindow
-	super Window
+	super ConfigurableWindow
 	
 	#ParameterData
-	var timer_data = new ParameterData("time",10)
-	var round_data = new ParameterData("round",2)
-	var preparation_data  = new ParameterData("preparation",10)
-	var rest_data = new ParameterData("rest",10)
-	var exercise_data = new ParameterData("number of exercises",2)
-	var duration_data = new ParameterData("duration",10)
+	var round_data = new ParameterData("round","2")
+	var preparation_data  = new ParameterData("preparation","10")
+	var rest_data = new ParameterData("rest","10")
+	var exercise_data = new ParameterData("number of exercises","2")
+	var duration_data = new ParameterData("duration","10")
+	var current_state_data = new ParameterData("current_state","config")
 	
-	#Contain all parameters data, round, exercise , rest etc...
-	var parameter_list : nullable Array[ParameterData]
-
-	#Current_state 
-	var clock_time = new Time(0,0,preparation_data.value)
-	var current_state = "config"
-	var remaining_round : Int = round_data.value
-	var remaining_exercise : Int = exercise_data.value
+	# remaining parameter
+	var clock_time = new Time(0,0,preparation_data.value.to_i)
+	var remaining_round : Int = round_data.value.to_i
+	var remaining_exercise : Int = exercise_data.value.to_i
 
 	#Root layout
 	var root_layout = new VerticalLayout(parent=self)
@@ -64,7 +56,7 @@ class TabataWindow
 
 	#Labels
 	var title_label = new Label(parent=header_layout, text="Tabata")
-	var state_label = new Label(parent=header_layout,text="config")
+	var current_state_label = new Label(parent=header_layout,text="config")
 	var round_label = new Label(parent=h1_layout, text="round")
 	var preparation_label = new Label(parent=h2_layout, text="preparation")
 	var rest_label = new Label(parent=h3_layout, text="rest")
@@ -73,24 +65,26 @@ class TabataWindow
 	var remaining_round_label = new Label(parent=h1_layout, text=remaining_round.to_s + "/", size=3.0) is lateinit
 	var remaining_exercise_label = new Label(parent=h4_layout, text=remaining_exercise.to_s + "/", size=3.0) is lateinit
 
-	#Clock
-	var timer_clock = new Clock(parent=mid_v1, text=clock_time.second.to_s)
+	#Thread
 	var timer_thread = new Timer(timer_clock,new Time(0,0,0),self)
 
 	#Buttons
-	var round_button = new Button(parent=h1_layout, text=round_data.value.to_s) is lateinit
-	var preparation_button = new Button(parent=h2_layout, text=preparation_data.value.to_s)
-	var rest_button = new Button(parent=h3_layout, text=rest_data.value.to_s)
-	var exercise_button = new Button(parent=h4_layout, text=exercise_data.value.to_s) is lateinit
-	var duration_button = new Button(parent=h5_layout, text=duration_data.value.to_s)
+	var round_button = new ConfigurableButton(parent=h1_layout, data=round_data) is lateinit
+	var preparation_button = new ConfigurableButton(parent=h2_layout, data=preparation_data)
+	var rest_button = new ConfigurableButton(parent=h3_layout, data=rest_data)
+	var exercise_button = new ConfigurableButton(parent=h4_layout, data=exercise_data) is lateinit
+	var duration_button = new ConfigurableButton(parent=h5_layout, data=duration_data)
 	var play_break_button = new Button(parent=bot_v1, text="->", size=1.5)
 	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
 
 	init
 	do
+		timer_clock.parent= mid_v1
+		timer_clock.text= clock_time.second.to_s
+
 		#Rebind parameterData with parameter_list
 		if parameter_list == null then
-			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data]
+			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data,current_state_data]
 
 		end
 
@@ -99,20 +93,30 @@ class TabataWindow
 	fun refresh_parameter
 	do
 			for parameter in parameter_list do
+
 				if parameter.name == "time" then
-				timer_data = parameter
+
+					timer_data = parameter
 
 				else if parameter.name == "round" then
-				round_data = parameter
+
+					round_data = parameter
 
 				else if parameter.name == "preparation" then
-				preparation_data = parameter
+
+					preparation_data = parameter
 
 				else if parameter.name == "rest" then
-				rest_data = parameter
+
+					rest_data = parameter
 
 				else if parameter.name == "exercise" then
-				exercise_data = parameter
+
+					exercise_data = parameter
+
+				else if parameter.name == "current_state" then
+
+					current_state_data = parameter
 
 				end
 			end
@@ -120,54 +124,71 @@ class TabataWindow
 
 	fun refresh_view
 	do
-		timer_clock.text = timer_data.value.to_s
-		round_button.text = round_data.value.to_s
-		preparation_button.text = preparation_data.value.to_s
-		rest_button.text = rest_data.value.to_s
-		exercise_button.text = exercise_data.value.to_s
+		timer_clock.text = timer_data.value
+		round_button.text = round_data.value
+		preparation_button.text = preparation_data .value
+		rest_button.text = rest_data.value
+		exercise_button.text = exercise_data.value
+		current_state_label.text = current_state_data.value
+		timer_thread.set_state(false)
+
 
 	end
 
-	fun restore_window(parameters: Array[ParameterData])
+	fun restore_window(parameters: nullable Array[ParameterData])
 	do
-		for parameter in parameters
-			do
-				print parameter.name
-				print parameter.value
 
+			print "restoration"
+			print "parameter send:"
+
+			for parameter in parameters do
+				print "name " + parameter.name
+				print "value " + parameter.value
 			end
+
 			parameter_list = parameters
 			refresh_parameter
 			refresh_view
+			
 	end
 
 
 	redef fun on_event(event)
 	do 
 		if event isa ButtonPressEvent then
-					
 
 					if event.sender == round_button then
-					app.push_window new ButtonWindow(null, round_data, parameter_list )
+
+					timer_thread.stop
+					app.push_window new ParameterWindow(null, round_data, self )
 
 					else if event.sender == preparation_button then
-					app.push_window new ButtonWindow(null, preparation_data, parameter_list)
+
+					timer_thread.stop
+					app.push_window new ParameterWindow(null, preparation_data, self)
 
 					else if event.sender == rest_button then
-					app.push_window new ButtonWindow(null, rest_data, parameter_list)
+
+					timer_thread.stop
+					app.push_window new ParameterWindow(null, rest_data, self)
 
 					else if event.sender == exercise_button then
-					app.push_window new ButtonWindow(null, exercise_data,parameter_list)
+
+					timer_thread.stop
+					app.push_window new ParameterWindow(null, exercise_data, self)
 
 					else if event.sender == duration_button then
-					app.push_window new ButtonWindow(null, duration_data,parameter_list)
+
+					timer_thread.stop
+					app.push_window new ParameterWindow(null, duration_data, self)
 
 					else if event.sender == reset_button then
+
 					app.push_window new TabataWindow(null)
 
 					else if event.sender == play_break_button then
 
-						#if thread isn't started
+						#if clock is stoped
 						if play_break_button.text == "->" then
 
 							#init
@@ -176,8 +197,8 @@ class TabataWindow
 							play_break_button.text = "||"
 							next_state
 
-							#resume if false (take current clock value)
-							else
+							#resume 
+							else if timer_thread.get_state == false then
 
 							resume_clock
 							play_break_button.text = "||"
@@ -201,91 +222,78 @@ class TabataWindow
 		timer_thread.start
 	end
 
-
-	fun next_state
+	redef fun next_state
 	do
-		print "remaining_round :" + remaining_round.to_s
-		print "remaining_exercise :" + remaining_exercise.to_s
 
-		
-		if current_state == "config" then
+		if current_state_data.value == "config" then
 
-			current_state = "preparation"
-			state_label.text = current_state
-			timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value),self)
+
+			current_state_data.value = "preparation"
+			current_state_label.text = current_state_data.value
+			timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value.to_i),self)
 			timer_thread.start
 
-		else if current_state == "preparation" then
+		else if current_state_data.value == "preparation" then
 
-			current_state = "exercise"
-			state_label.text = current_state
-			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value),self)
+
+			current_state_data.value = "exercise"
+			current_state_label.text = current_state_data.value
+			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value.to_i),self)
+			timer_thread.start
+
+		else if current_state_data.value == "rest" then
+
+			current_state_data.value = "exercise"
+			current_state_label.text = current_state_data.value
+			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value.to_i),self)
 			timer_thread.start
 
 
-		else if current_state == "rest" then
-
-			current_state = "exercise"
-			state_label.text = current_state
-			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value),self)
-			timer_thread.start
-
-
-		else if current_state == "exercise" then
+		else if current_state_data.value == "exercise" then
 
 			if remaining_exercise > 0 then
 
-				current_state = "rest"
-				state_label.text = current_state
+				current_state_data.value = "rest"
+				current_state_label.text = current_state_data.value
 				remaining_exercise += -1
 				remaining_exercise_label.text = remaining_exercise.to_s + "/"
-				timer_thread= new Timer(timer_clock,new Time(0,0,rest_data.value),self)
+				timer_thread= new Timer(timer_clock,new Time(0,0,rest_data.value.to_i),self)
 				timer_thread.start
 
 
 			else if remaining_round > 0 then
 
-					current_state = "preparation"
-					state_label.text = current_state
+					current_state_data.value = "preparation"
+					current_state_label.text = current_state_data.value
 					remaining_round += -1
 					remaining_round_label.text = remaining_round.to_s + "/"
-					remaining_exercise = exercise_data.value
+					remaining_exercise = exercise_data.value.to_i
 					remaining_exercise_label.text = remaining_exercise.to_s + "/"
-					timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value),self)
+					timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value.to_i),self)
 					timer_thread.start
 
-
 				else 
-					current_state = "break"
-					state_label.text = current_state
+					current_state_data.value = "break"
+					current_state_label.text = current_state_data.value
 					app.push_window new SuccessWindow
 				end
 		end
 	end
 end
 
-class ButtonWindow
-	super Window
+redef class ParameterWindow
 
-	public var button_data:  ParameterData 
-	var parameter_list : nullable Array[ParameterData]
-
-	var root_layout = new VerticalLayout(parent=self)
-	var set_value_layout = new HorizontalLayout(parent=root_layout)
-	var previous_value = new Button(parent=set_value_layout, text="<")
-	var button_value =  new Button(parent=set_value_layout, text=button_data.value.to_s) is lateinit
-	var next_value = new Button(parent=set_value_layout, text=">") is lateinit
-	var back = new Button(parent=root_layout, text="back", size=1.5)
-
-	fun refresh_parameter_list : Array[ParameterData]
+	fun refresh_parameter_list 
 	do
-		for parameter in parameter_list do
-			if parameter.name == button_data.name then
-				parameter = button_data
+		for parameter in previous_window.parameter_list do
+
+			if parameter.name == target_data.name then
+
+				parameter = target_data
 
 			end
 		end
-		return parameter_list.as(Array[ParameterData])
+
 	end
 
 	redef fun on_event(event)
@@ -296,16 +304,16 @@ class ButtonWindow
 			#automatiser la selection du bouton
 			if event.sender == back then
 				var tabata_window = new TabataWindow
-				tabata_window.restore_window(refresh_parameter_list)
+				tabata_window.restore_window(previous_window.parameter_list)
 				app.push_window tabata_window
 
-			else if event.sender == previous_value and button_data.value > 0 then
-				button_data.value += -1
-				button_value.text = button_data.value.to_s
+			else if event.sender == previous_value and target_data.value.to_i > 0 then
+				target_data.value = (target_data.value.to_i -1).to_s
+				button_value.text = target_data.value
 
 			else if event.sender == next_value then
-				button_data.value += 1
-				button_value.text = button_data.value.to_s
+				target_data.value = (target_data.value.to_i + 1).to_s
+				button_value.text = target_data.value
 
 			end
 
@@ -315,17 +323,13 @@ class ButtonWindow
 
 end
 
-class SuccessWindow
-	super Window
-
-	var root_layout = new VerticalLayout(parent=self)
-	var success_label = new Label(parent=root_layout, text="you did it", size=5.5)
-	var back_button = new Button(parent=root_layout, text="back", size=1.5)
+redef class SuccessWindow
 
 	redef fun on_event(event)
 	do
 		
 		if event isa ButtonPressEvent then
+
 			var tabata_window = new TabataWindow
 				app.push_window tabata_window
 		end
@@ -334,82 +338,4 @@ class SuccessWindow
 end
 
 
-
-# Thread implementation for timer_thread(Clock,Time)
-class Timer
-	super Thread
-
-
-	var clock: Clock
-	var init_time: Time
-	var window: TabataWindow
-	var current_time: Int = init_time.second is lateinit
-	var state = true
-
-	redef fun main
-	do
-		var i = init_time.second
-		var text = i.to_s
-
-		print "thread created"
-
-		loop 
-
-			if i <= 0 then
-
-				window.next_state
-				 break
-
-			else if state == false then
-
-				break
-
-			 end
-
-			sys.nanosleep(1,0)
-			i = i -1
-			print i
-			text = i.to_s
-			current_time = i
-			var task = new RefreshViewButton(clock,text)
-			app.run_on_ui_thread(task)
-			end
-
-		return "thread terminated"
-	end
-
-	fun stop
-	do
-		state = false
-	end
-
-	fun get_state : Bool
-	do
-		return state
-	end
-
-end
-
-
-
-class RefreshViewButton
-	super Task
-
-	var target : Clock
-	var value : String
-
-	redef fun main
-	do
-		target.text = value
-	end
-
-end
-
-class Clock
-
-	#super TextView
-	 super Label
-	#var native = new NativeService
-
-end
 
