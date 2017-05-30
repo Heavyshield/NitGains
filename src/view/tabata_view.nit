@@ -1,4 +1,4 @@
-module tabata_views
+module tabata_view
 
 import app::ui
 import app::data_store
@@ -10,12 +10,15 @@ import configurable_window
 import parameter_window
 import success_window
 import timer_model
-
-
+import tabata_context
+import save_window
 
 class TabataWindow
 	super ConfigurableWindow
 	
+	#Clock state
+	var clock_player = false
+
 	#ParameterData
 	var round_data = new ParameterData("round","2")
 	var preparation_data  = new ParameterData("preparation","10")
@@ -56,17 +59,17 @@ class TabataWindow
 
 	#Labels
 	var title_label = new Label(parent=header_layout, text="Tabata")
-	var current_state_label = new Label(parent=header_layout,text="config")
+	var current_state_label = new ConfigurableLabel(parent=header_layout,data= new ParameterData("current_state","config"))
 	var round_label = new Label(parent=h1_layout, text="round")
 	var preparation_label = new Label(parent=h2_layout, text="preparation")
 	var rest_label = new Label(parent=h3_layout, text="rest")
 	var exercise_label = new Label(parent=h4_layout, text="exercise")
 	var duration_label = new Label(parent=h5_layout, text="duration")
-	var remaining_round_label = new Label(parent=h1_layout, text=remaining_round.to_s + "/", size=3.0) is lateinit
-	var remaining_exercise_label = new Label(parent=h4_layout, text=remaining_exercise.to_s + "/", size=3.0) is lateinit
+	var remaining_round_label = new ConfigurableLabel(parent=h1_layout , data= new ParameterData("remaining_round",remaining_round.to_s + "/")) 
+	var remaining_exercise_label = new ConfigurableLabel(parent=h4_layout, data= new ParameterData("remaining_exercise",remaining_exercise.to_s + "/")) 
 
 	#Thread
-	var timer_thread = new Timer(timer_clock,new Time(0,0,0),self)
+	var clock_thread = new Timer(clock_label,new Time(0,0,0),self)
 
 	#Buttons
 	var round_button = new ConfigurableButton(parent=h1_layout, data=round_data) is lateinit
@@ -74,152 +77,124 @@ class TabataWindow
 	var rest_button = new ConfigurableButton(parent=h3_layout, data=rest_data)
 	var exercise_button = new ConfigurableButton(parent=h4_layout, data=exercise_data) is lateinit
 	var duration_button = new ConfigurableButton(parent=h5_layout, data=duration_data)
-	var play_break_button = new Button(parent=bot_v1, text="->", size=1.5)
+	var play_break_button = new ConfigurablePlayer(parent=bot_v1, size=1.5, data= new ParameterData("play_break","->"))
 	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
+
+	#data_store
+	var context : nullable TabataContext 
+	#= new TabataContext(parameter_list.as(Array[ParameterData])) is lateinit
+
+	#clean list
+	var button_list : Array[ConfigurableButton] = [round_button,preparation_button,rest_button,exercise_button,duration_button,play_break_button]
+	var label_list : Array[ConfigurableLabel] = [current_state_label,remaining_round_label,remaining_exercise_label,clock_label]
 
 	init
 	do
-		timer_clock.parent= mid_v1
-		timer_clock.text= clock_time.second.to_s
+
+		clock_label.parent= mid_v1
+		clock_label.text= clock_time.second.to_s
 
 		#Rebind parameterData with parameter_list
 		if parameter_list == null then
-			parameter_list = [timer_data,round_data,preparation_data,rest_data,exercise_data,duration_data,current_state_data]
+
+			parameter_list = [clock_data,round_data,preparation_data,rest_data,exercise_data,duration_data,current_state_data]
 
 		end
 
+
+
 	end
 
+
+	
 	fun refresh_parameter
 	do
-			for parameter in parameter_list do
+			clock_thread.set_state(false)
+		for parameter in parameter_list do
 
-				if parameter.name == "time" then
+			for configurable_button in button_list do
 
-					timer_data = parameter
+				if parameter.name == configurable_button.data.name then
 
-				else if parameter.name == "round" then
-
-					round_data = parameter
-
-				else if parameter.name == "preparation" then
-
-					preparation_data = parameter
-
-				else if parameter.name == "rest" then
-
-					rest_data = parameter
-
-				else if parameter.name == "exercise" then
-
-					exercise_data = parameter
-
-				else if parameter.name == "current_state" then
-
-					current_state_data = parameter
+				configurable_button.refresh(parameter)
 
 				end
 			end
+
+			for configurable_label in label_list do 
+
+				if parameter.name == configurable_label.data.name then
+
+				configurable_label.refresh(parameter)
+
+				end
+			end
+		end
+
+
 	end
 
-	fun refresh_view
-	do
-		timer_clock.text = timer_data.value
-		round_button.text = round_data.value
-		preparation_button.text = preparation_data .value
-		rest_button.text = rest_data.value
-		exercise_button.text = exercise_data.value
-		current_state_label.text = current_state_data.value
-		timer_thread.set_state(false)
-
-
-	end
-
+	#restore tabata_window from ParameterWindow with parameter_list
 	fun restore_window(parameters: nullable Array[ParameterData])
 	do
 
-			print "restoration"
-			print "parameter send:"
-
-			for parameter in parameters do
-				print "name " + parameter.name
-				print "value " + parameter.value
-			end
-
 			parameter_list = parameters
 			refresh_parameter
-			refresh_view
 			
 	end
 
 
 	redef fun on_event(event)
 	do 
+
 		if event isa ButtonPressEvent then
 
-					if event.sender == round_button then
+			if event.sender isa ConfigurablePlayer then
 
-					timer_thread.stop
-					app.push_window new ParameterWindow(null, round_data, self )
-
-					else if event.sender == preparation_button then
-
-					timer_thread.stop
-					app.push_window new ParameterWindow(null, preparation_data, self)
-
-					else if event.sender == rest_button then
-
-					timer_thread.stop
-					app.push_window new ParameterWindow(null, rest_data, self)
-
-					else if event.sender == exercise_button then
-
-					timer_thread.stop
-					app.push_window new ParameterWindow(null, exercise_data, self)
-
-					else if event.sender == duration_button then
-
-					timer_thread.stop
-					app.push_window new ParameterWindow(null, duration_data, self)
-
-					else if event.sender == reset_button then
-
-					app.push_window new TabataWindow(null)
-
-					else if event.sender == play_break_button then
-
-						#if clock is stoped
-						if play_break_button.text == "->" then
+						#if clock is stoped (false)
+						if clock_player == false then
 
 							#init
-							if timer_thread.get_state == true then
+							if clock_thread.get_state == true then
 							
 							play_break_button.text = "||"
+							clock_player = true
 							next_state
 
 							#resume 
-							else if timer_thread.get_state == false then
+							else if clock_thread.get_state == false then
 
 							resume_clock
 							play_break_button.text = "||"
+							clock_player = true
 							print "clock resume"
 
 							end
 
-						#if clock is on
-						else
+						#if clock is on (true)
+						else if clock_player == true then
+
+							clock_thread.stop
 							play_break_button.text = "->"
-							timer_thread.stop
+							
+							clock_player = false
 							print "clock break (state is false)"
-					end
+						end	
+
+			else if event.sender isa ConfigurableButton then
+
+				clock_thread.stop
+				app.push_window new ParameterWindow(null, event.sender.as(ConfigurableButton).data, self )
+				
 			end
 		end
+
 	end
 
 	fun resume_clock
 	do
-		timer_thread= new Timer(timer_clock,new Time(0,0,timer_clock.text.to_i),self)
-		timer_thread.start
+		clock_thread= new Timer(clock_label,new Time(0,0,clock_label.text.to_i),self)
+		clock_thread.start
 	end
 
 	redef fun next_state
@@ -230,23 +205,23 @@ class TabataWindow
 
 			current_state_data.value = "preparation"
 			current_state_label.text = current_state_data.value
-			timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value.to_i),self)
-			timer_thread.start
+			clock_thread= new Timer(clock_label,new Time(0,0,preparation_data.value.to_i),self)
+			clock_thread.start
 
 		else if current_state_data.value == "preparation" then
 
 
 			current_state_data.value = "exercise"
 			current_state_label.text = current_state_data.value
-			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value.to_i),self)
-			timer_thread.start
+			clock_thread= new Timer(clock_label,new Time(0,0,duration_data.value.to_i),self)
+			clock_thread.start
 
 		else if current_state_data.value == "rest" then
 
 			current_state_data.value = "exercise"
 			current_state_label.text = current_state_data.value
-			timer_thread= new Timer(timer_clock,new Time(0,0,duration_data.value.to_i),self)
-			timer_thread.start
+			clock_thread= new Timer(clock_label,new Time(0,0,duration_data.value.to_i),self)
+			clock_thread.start
 
 
 		else if current_state_data.value == "exercise" then
@@ -257,8 +232,8 @@ class TabataWindow
 				current_state_label.text = current_state_data.value
 				remaining_exercise += -1
 				remaining_exercise_label.text = remaining_exercise.to_s + "/"
-				timer_thread= new Timer(timer_clock,new Time(0,0,rest_data.value.to_i),self)
-				timer_thread.start
+				clock_thread= new Timer(clock_label,new Time(0,0,rest_data.value.to_i),self)
+				clock_thread.start
 
 
 			else if remaining_round > 0 then
@@ -269,8 +244,8 @@ class TabataWindow
 					remaining_round_label.text = remaining_round.to_s + "/"
 					remaining_exercise = exercise_data.value.to_i
 					remaining_exercise_label.text = remaining_exercise.to_s + "/"
-					timer_thread= new Timer(timer_clock,new Time(0,0,preparation_data.value.to_i),self)
-					timer_thread.start
+					clock_thread= new Timer(clock_label,new Time(0,0,preparation_data.value.to_i),self)
+					clock_thread.start
 
 				else 
 					current_state_data.value = "break"
@@ -279,8 +254,28 @@ class TabataWindow
 				end
 		end
 	end
+
+	redef fun on_save_state
+	do
+		app.data_store["context"] = context
+		super
+	end
+
+	redef fun on_restore_state
+	do
+		super
+
+		var context = app.data_store["context"]
+
+		if not context isa TabataContext then return
+
+		self.context = context
+
+	end
 end
 
+
+#redef ParameterWindow
 redef class ParameterWindow
 
 	fun refresh_parameter_list 
@@ -323,6 +318,7 @@ redef class ParameterWindow
 
 end
 
+#redef SuccessWindow
 redef class SuccessWindow
 
 	redef fun on_event(event)
@@ -335,6 +331,16 @@ redef class SuccessWindow
 		end
 
 	end
+end
+
+#redef TabataContext
+redef class TabataContext 
+
+	redef fun restore_context
+	do
+		app.push_window new TabataWindow(null,self.parameter_list)
+	end
+
 end
 
 

@@ -9,7 +9,7 @@ import nitGains_data
 class ConfigurableButton
 	super Button
 
-	var data : ParameterData
+	var data : ParameterData is public writable
 
 	init
 	do
@@ -22,13 +22,22 @@ class ConfigurableButton
 		data = new_data
 		self.text = data.value
 	end
+end
+
+class ConfigurablePlayer
+	super ConfigurableButton
+
+end
+
+class ConfigurableSave
+	super ConfigurableButton
 
 end
 
 class ConfigurableLabel
 	super Label
 
-	var data : ParameterData
+	var data : ParameterData is public writable
 
 	init
 	do

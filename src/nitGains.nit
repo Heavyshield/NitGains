@@ -8,7 +8,7 @@ end
 import app::ui
 import app::data_store
 import android::aware
-import nitGains_logic
+import tabata_view
 
 
 redef class App
