@@ -10,6 +10,7 @@ import configurable_window
 
 
 class ParameterWindow
+
 	super Window
 
 	public var target_data:  ParameterData 

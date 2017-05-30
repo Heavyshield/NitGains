@@ -15,11 +15,11 @@ class ConfigurableWindow
 	#Contain all parameters data, round, exercise , rest etc...
 	var parameter_list : nullable Array[ParameterData]
 	var configurable_button_list : nullable Array[ConfigurableButton]
-	var timer_data = new ParameterData("time","10")
+	var clock_data = new ParameterData("clock","10")
 
 	#Clock
 	#var timer_clock = new Clock(parent=mid_v1, text=clock_time.second.to_s)
-	var timer_clock = new Clock
+	var clock_label = new Clock(data=clock_data) is lateinit
 
 	fun next_state
 	do
@@ -31,7 +31,7 @@ end
 class Clock
 
 	#super TextView
-	 super Label
+	 super ConfigurableLabel
 	#var native = new NativeService
 
 end

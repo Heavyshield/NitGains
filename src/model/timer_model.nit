@@ -47,7 +47,7 @@ class Timer
 			text = i.to_s
 			current_time = i
 			var task = new RefreshViewTask(clock,text)
-			window.timer_data.value = i.to_s
+			window.clock_data.value = i.to_s
 			app.run_on_ui_thread(task)
 			end
 
