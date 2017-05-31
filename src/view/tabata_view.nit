@@ -79,6 +79,7 @@ class TabataWindow
 	var duration_button = new ConfigurableButton(parent=h5_layout, data=duration_data)
 	var play_break_button = new ConfigurablePlayer(parent=bot_v1, size=1.5, data= new ParameterData("play_break","->"))
 	var reset_button = new Button(parent=bot_v2, text="reset", size=1.5)
+	var save_button = new Button(parent=bot_v2, text="save", size=1.5)
 
 	#data_store
 	var context : nullable TabataContext 
@@ -100,13 +101,10 @@ class TabataWindow
 			parameter_list = [clock_data,round_data,preparation_data,rest_data,exercise_data,duration_data,current_state_data]
 
 		end
-
-
-
 	end
 
 
-	
+
 	fun refresh_parameter
 	do
 			clock_thread.set_state(false)
@@ -144,11 +142,13 @@ class TabataWindow
 	end
 
 
+	#On ButtonPressEvent do something 
 	redef fun on_event(event)
 	do 
 
 		if event isa ButtonPressEvent then
 
+			#Play break button
 			if event.sender isa ConfigurablePlayer then
 
 						#if clock is stoped (false)
@@ -181,10 +181,20 @@ class TabataWindow
 							print "clock break (state is false)"
 						end	
 
+
 			else if event.sender isa ConfigurableButton then
 
 				clock_thread.stop
 				app.push_window new ParameterWindow(null, event.sender.as(ConfigurableButton).data, self )
+
+			else if event.sender isa Button then
+				clock_thread.stop
+
+				if event.sender.text == "reset" then
+					app.push_window new TabataWindow(null)
+				else if event.sender.text == "save" then
+					app.push_window new SaveWindow(null, parameter_list.as(Array[ParameterData]), self)
+				end
 				
 			end
 		end
@@ -288,7 +298,6 @@ redef class ParameterWindow
 
 			end
 		end
-
 	end
 
 	redef fun on_event(event)
@@ -311,11 +320,8 @@ redef class ParameterWindow
 				button_value.text = target_data.value
 
 			end
-
 		end
-
 	end
-
 end
 
 #redef SuccessWindow
@@ -324,6 +330,18 @@ redef class SuccessWindow
 	redef fun on_event(event)
 	do
 		
+		if event isa ButtonPressEvent then
+
+			var tabata_window = new TabataWindow
+				app.push_window tabata_window
+		end
+
+	end
+end
+
+redef class SaveWindow 
+	redef fun on_event(event)
+	do
 		if event isa ButtonPressEvent then
 
 			var tabata_window = new TabataWindow

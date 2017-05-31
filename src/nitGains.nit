@@ -1,8 +1,8 @@
 module nitGains is
 	app_name "app.nit NitGains"
-	app_version(0, 0, git_revision)
-	app_namespace "org.nitlanguage.nitGains"
-	android_api_target 15
+	app_version(0, 0, 1)
+	app_namespace "Heavyshield.NitGains"
+	android_api_target 14
 end
 
 import app::ui
