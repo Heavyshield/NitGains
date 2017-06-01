@@ -14,11 +14,13 @@
 
 <resources>
 
-    <!-- Default background color for the status bar. -->
+
     <color name="dark_orange">#FFFF8800</color>
 
-    <!-- Color to indicate an error has occured. -->
-    <color name="tabata_error_color">#F40056</color>
+
+    <color name="dark_amber">#ff8f00</color>
+
+    <color name="white">#FFFFFF</color>
 
     <!-- Background color of the tabata display. -->
     <color name="display_background_color">#FFF</color>

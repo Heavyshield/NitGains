@@ -37,7 +37,6 @@ class TabataWindow
 
 	#Main layout
 	var header_layout = new HorizontalLayout(parent=root_layout)
-	var top_layout = new HorizontalLayout(parent=root_layout)
 	var mid_layout = new HorizontalLayout(parent=root_layout)
 	var bot_layout = new HorizontalLayout(parent=root_layout)
 
