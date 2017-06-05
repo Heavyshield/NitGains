@@ -7,6 +7,7 @@ import nitGains_data
 import configurable_window
 import pthreads
 import app::http_request
+import pthreads::extra
 
 
 
@@ -15,49 +16,53 @@ class Timer
 	super Thread
 
 
+
 	var clock: Clock
-	var init_time: Time
+	var current_time: Int is writable
 	var window: ConfigurableWindow
-	var current_time: Int = init_time.second is lateinit
-	var state = true
+
+	#state true -> couting or next_state
+	#state false -> sleep
+	var state = false
+	var is_init = false is writable
 
 	redef fun main
 	do
-		var i = init_time.second
-		var text = i.to_s
 
-		print "thread created"
-
+		print "clock init"
 		loop 
+			var i = current_time
+			sys.nanosleep(1,0)
+			print "sleep"
 
-			if i <= 0 then
+
+			# continue to decrease i
+			 if state == true and i>0 then
+				
+				i = i - 1
+				var task = new RefreshViewTask(clock,i.to_s)
+				window.clock_data.value = i.to_s
+				app.run_on_ui_thread(task)
+				current_time = i
+
+			# else if timer is at 0 next_state
+			else if i <= 0 and state == true then
 
 				window.next_state
-				 break
 
-			else if state == false then
-
-				break
-
-			 end
-
-			sys.nanosleep(1,0)
-			i = i -1
-			print i
-			text = i.to_s
-			current_time = i
-			var task = new RefreshViewTask(clock,text)
-			window.clock_data.value = i.to_s
-			app.run_on_ui_thread(task)
+				var task = new RefreshViewTask(clock,i.to_s)
+				window.clock_data.value = i.to_s
+				app.run_on_ui_thread(task)
 			end
+		end
 
-		return "thread terminated"
 	end
 
 	fun stop
 	do
 		state = false
 	end
+
 
 	fun get_state : Bool
 	do
@@ -67,6 +72,18 @@ class Timer
 	fun set_state(value : Bool)
 	do
 		state = value
+	end
+
+	fun set_current_time(value: Int)
+	do
+		current_time = value
+
+	end
+
+	fun launch
+	do
+		state = true
+
 	end
 
 end
