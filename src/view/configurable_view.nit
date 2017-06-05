@@ -27,6 +27,27 @@ end
 class ConfigurablePlayer
 	super ConfigurableButton
 
+	#false -> on pause 
+	#true -> on play
+	var state = false
+
+	fun on_break
+	do
+
+		state = false
+		self.text = "->"
+
+	end
+
+	fun on_play
+	do
+
+		state = true
+		self.text = "||"
+
+	end
+
+
 end
 
 class ConfigurableSave
