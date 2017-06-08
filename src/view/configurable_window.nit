@@ -6,6 +6,7 @@ import android::aware
 import nitGains_data
 import configurable_view
 import date
+import app::http_request
 
 
 #classic window with parameter bind on buttons and a clock
@@ -16,22 +17,19 @@ class ConfigurableWindow
 	var parameter_list : nullable Array[ParameterData]
 	var configurable_button_list : nullable Array[ConfigurableButton]
 	var clock_data = new ParameterData("clock","10")
+	var current_state_data = new ParameterData("current_state","config")
 
 	#Clock
 	#var timer_clock = new Clock(parent=mid_v1, text=clock_time.second.to_s)
 	var clock_label = new Clock(data=clock_data) is lateinit
+	var current_state_label = new ConfigurableLabel(data=current_state_data) is lateinit
 
 	fun next_state
 	do
 	end
 
-
 end
 
-class Clock
 
-	#super TextView
-	 super ConfigurableLabel
-	#var native = new NativeService
 
-end
+

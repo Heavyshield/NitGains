@@ -9,15 +9,4 @@ import app::ui
 import app::data_store
 import android::aware
 import tabata_view
-
-
-redef class App
-
-	redef fun on_create
-	do
-		push_window new TabataWindow(null)
-		super
-	end
-
-end
-
+import timer_model
