@@ -50,6 +50,7 @@ class ConfigurablePlayer
 
 end
 
+
 class ConfigurableSave
 	super ConfigurableButton
 
@@ -70,5 +71,11 @@ class ConfigurableLabel
 		data = new_data
 		self.text = data.value
 	end
+
+end
+
+class Clock
+
+	 super ConfigurableLabel
 
 end
