@@ -23,17 +23,30 @@ class Timer
 	var state = false
 	var is_init = false is writable
 	var is_killed = false
+	var previous_state = "null"
+	var current_state = "null"
 
 	redef fun main
 	do
+		print "main_________________"
 
-		print "clock init"
+		current_time = window.clock_label.data.value.to_i
+		current_state = window.current_state_label.data.value
+
+		print "current_time : " + current_time.to_s
+		print "current_state : " + current_state
+
 		loop 
 
+			current_state = window.current_state_label.data.value
 			var i = current_time
 			refresh_clock(i)
 
 			sys.nanosleep(1,0)
+
+			print "loop_________________"
+			print "current_time : " + current_time.to_s
+			print "current_state : " + current_state
 			
 			# continue to decrease i
 			 if state == true and i>0 then
@@ -47,27 +60,32 @@ class Timer
 			else if i <= 0 and state == true then
 
 				#TODO throw wrong thread on next_state
-				print " i < 0 state is true so -> next state"
+				print " i <= 0 and state == true then"
+				print "previous_state : " + previous_state
+				print "current_state : " + current_state
+
+					#fix for avoid an another nanosleep 
+					if current_state != previous_state then
+
+					print "spot a different state so allow a next state"
+
+					previous_state = current_state
 
 					refresh_state
 
-				
-				print "after next state before dangerous refresh clock"
+					end
 
 					refresh_clock(i)
 
-				print "next state after dangerous refresh"
-
-				#TODO this nanosleep allow the main thread then necessary time for refresh state and clock for the next loop
-				#TODO found a more elegant way to avoid this, or increase the value for a more stable android
-				sys.nanosleep(0,100000)
 
 			else if is_killed == true then
+
+					print "thread killed"
 
 				return "thread killed"
 
 			else
-				print "nothing"
+				print "waiting..."
 
 			end
 		end
@@ -137,7 +155,7 @@ class RefreshStateTask
 
 	redef fun main
 	do
-		print "refresh state task main"
+
 		window.next_state
 
 	end
@@ -152,9 +170,10 @@ class RefreshViewTask
 
 	redef fun main
 	do
-		print "refresh view task main"
+
 		target.data.value = value
 		target.text = value
+
 	end
 
 end

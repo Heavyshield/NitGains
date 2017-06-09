@@ -16,6 +16,8 @@ import save_window
 class TabataWindow
 	super ConfigurableWindow	
 
+	auto_serializable 
+
 	#ParameterData
 	var round_data = new ParameterData("round","2")
 	var preparation_data  = new ParameterData("preparation","10")
@@ -95,6 +97,7 @@ class TabataWindow
 
 	redef fun on_save_state
 	do
+		print "on_save_state"
 
 		app.clock_thread.stop
 		refresh_parameter_list
@@ -105,6 +108,8 @@ class TabataWindow
 	end
 	redef fun on_restore_state
 	do
+		print "on_restore_state"
+
 		var context = app.data_store["context"]
 
 		if not context isa TabataContext then return
@@ -192,7 +197,10 @@ class TabataWindow
 
 							if app.clock_thread.is_init == false then
 
-								next_state
+								if current_state_label.data.value == "config" then
+									next_state
+								end
+
 								app.clock_thread.is_init = true
 								app.clock_thread.start
 
@@ -242,6 +250,7 @@ class TabataWindow
 
 	redef fun next_state
 	do
+		print "next state is called"
 
 		if current_state_label.data.value == "config" then
 
@@ -308,8 +317,8 @@ redef class ParameterWindow
 				var tabata_window = new TabataWindow
 				tabata_window.restore_window(previous_window.parameter_list)
 				app.push_window tabata_window
-				app.clock_thread = new Timer(tabata_window)
-				app.clock_thread.current_time = tabata_window.clock_label.data.value.to_i
+				app.clock_thread = new  Timer(tabata_window)
+				app.clock_thread.launch
 
 			else if event.sender == previous_value and target_data.value.to_i > 0 then
 				target_data.value = (target_data.value.to_i -1).to_s
