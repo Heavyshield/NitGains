@@ -7,3 +7,7 @@ androidApk:
 	mkdir -p bin
 	nitc -o bin/nitGains.apk src/androidVersions/android15.nit -m android
 
+clean:
+	rm -f bin/*
+
+

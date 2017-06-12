@@ -10,8 +10,8 @@ import configurable_window
 import parameter_window
 import success_window
 import timer_model
-import tabata_context
 import save_window
+import load_window
 
 class TabataWindow
 	super ConfigurableWindow	
@@ -72,14 +72,11 @@ class TabataWindow
 	var duration_button = new ConfigurableButton(parent=h5_layout, data=duration_data)
 	var play_break_button = new ConfigurablePlayer(parent=bot_v1, size=1.5, data= new ParameterData("play_break","->"))
 	var save_button = new Button(parent=bot_v2, text="save", size=1.5)
+	var load_button = new Button(parent=bot_v2, text="load", size=1.5)
 
 	#clean list
 	var button_list : Array[ConfigurableButton] = [round_button,preparation_button,rest_button,exercise_button,duration_button,play_break_button]
 	var label_list : Array[ConfigurableLabel] = [current_state_label,remaining_round_label,remaining_exercise_label,clock_label]
-
-
-	# Context with the paramater needed for the restoration
-	 var context = new TabataContext(self.parameter_list.as(Array[ParameterData])) is lazy
 
 	init
 	do
@@ -96,30 +93,27 @@ class TabataWindow
 
 	redef fun on_save_state
 	do
-		print "on_save_state v2...."
 
 		app.clock_thread.stop
 		refresh_parameter_list
-		context = new TabataContext(self.parameter_list.as(Array[ParameterData])) 
+		context = new TabataContext("context",self.parameter_list.as(Array[ParameterData])) 
 		app.data_store["context"] = context
 		super
 
 	end
 	redef fun on_restore_state
 	do
-		print "on_restore_state v2...."
 
 		var context = app.data_store["context"]
 
 		if not context isa TabataContext then return
 
-		self.context = context
-
-				var tabata_window = new TabataWindow
-				tabata_window.restore_window(context.tabata_save)
-				app.push_window tabata_window
-				app.clock_thread = new  Timer(tabata_window)
-				app.clock_thread.launch
+			self.context = context
+			var tabata_window = new TabataWindow
+			tabata_window.restore_window(context.tabata_save)
+			app.push_window tabata_window
+			app.clock_thread = new  Timer(tabata_window)
+			app.clock_thread.launch
 
 	end
 
@@ -226,15 +220,20 @@ class TabataWindow
 				app.clock_thread.kill
 				app.push_window new ParameterWindow(null, event.sender.as(ConfigurableButton).data, self )
 
-			else if event.sender isa Button then
+			end
 
-				app.clock_thread.stop
 
-				else if event.sender.text == "save" then
-					app.push_window new SaveWindow(null, parameter_list.as(Array[ParameterData]), self)
+				if event.sender.text == "save" then
+
+					app.clock_thread.stop
+						app.push_window new SaveWindow(null, parameter_list.as(Array[ParameterData]), self)
+
+				else if event.sender.text == "load" then
+
+					app.clock_thread.stop
+						app.push_window new LoadWindow(null, self)
 				end
-				
-			
+
 		end
 
 	end
@@ -249,7 +248,6 @@ class TabataWindow
 
 	redef fun next_state
 	do
-		print "next state is called"
 
 		if current_state_label.data.value == "config" then
 
@@ -293,7 +291,7 @@ class TabataWindow
 				else 
 					current_state_label.data.value = "break"
 					current_state_label.text = current_state_label.data.value
-					app.push_window new SuccessWindow
+					app.push_window new SuccessWindow(null,self)
 				end
 		end
 	end
@@ -334,56 +332,109 @@ end
 #redef SuccessWindow
 redef class SuccessWindow
 
+	
 	redef fun on_event(event)
 	do
 		
 		if event isa ButtonPressEvent then
 
 			var tabata_window = new TabataWindow
-				app.push_window tabata_window
-		end
+			tabata_window.restore_window(previous_window.parameter_list)
+			app.push_window tabata_window
+			app.clock_thread = new  Timer(tabata_window)
+			app.clock_thread.launch
 
+		end
 	end
 end
 
 redef class SaveWindow 
 	redef fun on_event(event)
 	do
+
+		#if back is pressed save the current config
+		if event isa ButtonPressEvent then
+
+			save_context(save_text_input.text.to_s)
+			var tabata_window = new TabataWindow
+			tabata_window.restore_window(previous_window.parameter_list)
+			app.push_window tabata_window
+			app.clock_thread = new  Timer(tabata_window)
+			app.clock_thread.launch
+
+		end
+
+	end
+
+	#app.data_store["saves"] is a context containing HashMap
+	fun save_context(name : String)
+	do
+
+		var save_context = app.data_store["saves"]
+
+		if not save_context isa SaveContext then
+
+			var map = new HashMap[String, TabataContext]
+			map["default"] = previous_window.context
+			var saves = new SaveContext("saves", map) 
+			app.data_store["saves"] = saves
+
+			save_context = app.data_store["saves"]
+
+		end
+
+		 save_context = app.data_store["saves"].as(SaveContext)
+		var new_save = new TabataContext("save1",previous_window.parameter_list.as(Array[ParameterData])) 
+		var new_map = save_context.map
+		new_map[save_text_input.text.to_s] = new_save
+		save_context.map = new_map  
+		app.data_store["saves"] = save_context
+
+	end
+
+end
+
+redef class LoadWindow 
+	
+	var selected_context: String = "save1"
+
+	redef fun on_event(event)
+	do
 		if event isa ButtonPressEvent then
 
 			var tabata_window = new TabataWindow
-				app.push_window tabata_window
+			var new_context = app.data_store[selected_context].as(SaveContext)
+			
+			#convert HashMap into classical Array
+			var new_context_map = new_context.map
+			var context = new_context_map["saves"]
+			tabata_window.restore_window(context.tabata_save)
+			app.push_window tabata_window
+			app.clock_thread = new  Timer(tabata_window)
+			app.clock_thread.launch
+
 		end
 
 	end
 end
 
-
-class TabataContext
-
-	auto_serializable 
-
-	var tabata_save : Array[ParameterData]
-
-end
-
-
 redef class App
 
 	var clock_thread : nullable Timer = null
-	 var tabata_window = new TabataWindow(null) is lazy
-
+	var tabata_window = new TabataWindow(null) is lazy
 
 	redef fun on_create
 	do
-		
 
 		clock_thread = new Timer(tabata_window)
-
 		push_window tabata_window
+
 		super
+
 	end
 
 end
 
 
+# /home/thibaud/Android/Sdk/platform-tools/
+# ./adb logcat > log.txt

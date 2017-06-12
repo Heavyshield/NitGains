@@ -18,7 +18,7 @@ class SaveWindow
 
 	var root_layout = new VerticalLayout(parent=self)
 	var save_label = new Label(parent=root_layout, text="save name :")
-	var save_textInput = new TextInput(parent=root_layout)
+	var save_text_input = new TextInput(parent=root_layout)
 	var back = new Button(parent=root_layout, text="back", size=1.5)
 
 end

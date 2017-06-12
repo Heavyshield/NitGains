@@ -7,6 +7,7 @@ import nitGains_data
 import configurable_view
 import date
 import app::http_request
+import tabata_context
 
 
 #classic window with parameter bind on buttons and a clock
@@ -23,6 +24,10 @@ class ConfigurableWindow
 	#var timer_clock = new Clock(parent=mid_v1, text=clock_time.second.to_s)
 	var clock_label = new Clock(data=clock_data) is lateinit
 	var current_state_label = new ConfigurableLabel(data=current_state_data) is lateinit
+
+	# Context with the paramater needed for the restoration
+	var context = new TabataContext("context" , self.parameter_list.as(Array[ParameterData])) is lazy
+
 
 	fun next_state
 	do
