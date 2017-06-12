@@ -13,8 +13,6 @@ import app::http_request
 class ConfigurableWindow 
 	super Window 
 
-	auto_serializable 
-
 	#Contain all parameters data, round, exercise , rest etc...
 	var parameter_list : nullable Array[ParameterData]
 	var configurable_button_list : nullable Array[ConfigurableButton]

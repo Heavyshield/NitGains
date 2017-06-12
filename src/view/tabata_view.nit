@@ -16,7 +16,6 @@ import save_window
 class TabataWindow
 	super ConfigurableWindow	
 
-	auto_serializable 
 
 	#ParameterData
 	var round_data = new ParameterData("round","2")
@@ -80,7 +79,7 @@ class TabataWindow
 
 
 	# Context with the paramater needed for the restoration
-	 var context = new TabataContext(self) is lazy
+	 var context = new TabataContext(self.parameter_list.as(Array[ParameterData])) is lazy
 
 	init
 	do
@@ -97,18 +96,18 @@ class TabataWindow
 
 	redef fun on_save_state
 	do
-		print "on_save_state"
+		print "on_save_state v2...."
 
 		app.clock_thread.stop
 		refresh_parameter_list
-		context = new TabataContext(self) 
+		context = new TabataContext(self.parameter_list.as(Array[ParameterData])) 
 		app.data_store["context"] = context
 		super
 
 	end
 	redef fun on_restore_state
 	do
-		print "on_restore_state"
+		print "on_restore_state v2...."
 
 		var context = app.data_store["context"]
 
@@ -116,8 +115,11 @@ class TabataWindow
 
 		self.context = context
 
-		#reload window
-		app.push_window context.tabata_save
+				var tabata_window = new TabataWindow
+				tabata_window.restore_window(context.tabata_save)
+				app.push_window tabata_window
+				app.clock_thread = new  Timer(tabata_window)
+				app.clock_thread.launch
 
 	end
 
@@ -133,8 +135,6 @@ class TabataWindow
 			end
 		end
 
-
-
 			for parameter in parameter_list do
 
 				if parameter.name == "clock" then
@@ -145,7 +145,6 @@ class TabataWindow
 
 			end
 		
-
 	end
 
 	fun refresh_button_data
@@ -359,11 +358,13 @@ redef class SaveWindow
 	end
 end
 
+
 class TabataContext
 
 	auto_serializable 
 
-	var tabata_save : TabataWindow
+	var tabata_save : Array[ParameterData]
+
 end
 
 
