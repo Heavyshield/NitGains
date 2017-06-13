@@ -19,7 +19,7 @@ class TabataWindow
 	#ParameterData
 	var round_data = new ParameterData("round","2")
 	var preparation_data  = new ParameterData("preparation","10")
-	var rest_data = new ParameterData("rest","subl sdsd10")
+	var rest_data = new ParameterData("rest","10")
 	var exercise_data = new ParameterData("number of exercises","2")
 	var duration_data = new ParameterData("duration","10")
 
@@ -56,8 +56,8 @@ class TabataWindow
 	var rest_label = new Label(parent=h3_layout, text="rest")
 	var exercise_label = new Label(parent=h4_layout, text="exercise")
 	var duration_label = new Label(parent=h5_layout, text="duration")
-	var remaining_round_label = new ConfigurableLabel(parent=h1_layout , data= new ParameterData("remaining_round",remaining_round.to_s + "/")) 
-	var remaining_exercise_label = new ConfigurableLabel(parent=h4_layout, data= new ParameterData("remaining_exercise",remaining_exercise.to_s + "/")) 
+	var remaining_round_label = new ConfigurableLabel(parent=h1_layout , data= new ParameterData("remaining_round",remaining_round.to_s )) 
+	var remaining_exercise_label = new ConfigurableLabel(parent=h4_layout, data= new ParameterData("remaining_exercise",remaining_exercise.to_s )) 
 
 	#Buttons
 	var round_button = new ConfigurableButton(parent=h1_layout, data=round_data) is lateinit
@@ -288,19 +288,19 @@ class TabataWindow
 
 			current_state_label.data.value = "preparation"
 			current_state_label.text = current_state_label.data.value
-			app.clock_thread.current_time = preparation_data.value.to_i
+			app.clock_thread.current_time = preparation_button.data.value.to_i
 
 		else if current_state_label.data.value == "preparation" then
 
 			current_state_label.data.value = "exercise"
 			current_state_label.text = current_state_label.data.value
-			app.clock_thread.current_time = duration_data.value.to_i
+			app.clock_thread.current_time = duration_button.data.value.to_i
 
 		else if current_state_label.data.value == "rest" then
 
 			current_state_label.data.value = "exercise"
 			current_state_label.text = current_state_label.data.value
-			app.clock_thread.current_time = duration_data.value.to_i
+			app.clock_thread.current_time = duration_button.data.value.to_i
 
 		else if current_state_label.data.value == "exercise" then
 
@@ -310,7 +310,7 @@ class TabataWindow
 				current_state_label.text = current_state_label.data.value
 				remaining_exercise += -1
 				remaining_exercise_label.text = remaining_exercise.to_s 
-				app.clock_thread.current_time = rest_data.value.to_i
+				app.clock_thread.current_time = rest_button.data.value.to_i
 
 			else if remaining_round > 0 then
 
@@ -320,7 +320,7 @@ class TabataWindow
 					remaining_round_label.text = remaining_round.to_s 
 					remaining_exercise = exercise_data.value.to_i
 					remaining_exercise_label.text = remaining_exercise.to_s 
-					app.clock_thread.current_time = preparation_data.value.to_i
+					app.clock_thread.current_time = preparation_button.data.value.to_i
 
 				else
 

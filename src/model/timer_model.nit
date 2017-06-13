@@ -34,7 +34,6 @@ class Timer
 
 		loop 
 
-			print current_time
 			current_state = window.current_state_label.data.value
 			var i = current_time
 			refresh_clock(i)
