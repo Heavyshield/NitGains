@@ -9,5 +9,6 @@ androidApk:
 
 clean:
 	rm -f bin/*
+	rm ~/.config/nitGains/data_store.db
 
 
