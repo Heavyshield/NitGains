@@ -21,8 +21,10 @@ class LoadWindow
 	var context_list_label = new Label(parent=root_layout)
 	var selected_save : String = "null"
 	var label_1 = new Label
-
 	var button_list = new Array[Button]
+
+	var back = new Button(parent=root_layout, text="back", size=1.5)
+
 
 	init 
 	do 
@@ -40,6 +42,7 @@ class LoadWindow
 
 				var button_view = new Button(parent=root_layout, text= button)
 				button_list.add button_view
+
 			end
 
 		end
@@ -50,18 +53,13 @@ class LoadWindow
 
 		var i = 0
 
-
-
-			for name, context in saves.map do 
+		for name, context in saves.map do 
 
 			button_list[i].text = name
 
 			i = i + 1
 
-			end 
-
-	
-
+		end 
 
 	end
 

@@ -28,55 +28,38 @@ class Timer
 
 	redef fun main
 	do
-		print "main_________________"
 
 		current_time = window.clock_label.data.value.to_i
 		current_state = window.current_state_label.data.value
 
-		print "current_time : " + current_time.to_s
-		print "current_state : " + current_state
-
 		loop 
 
+			print current_time
 			current_state = window.current_state_label.data.value
 			var i = current_time
 			refresh_clock(i)
-
 			sys.nanosleep(1,0)
 
-			print "loop_________________"
-			print "current_time : " + current_time.to_s
-			print "current_state : " + current_state
-			
 			# continue to decrease i
 			 if state == true and i>0 then
 				
 				i = i - 1
 				refresh_clock(i)
 				current_time = i
-
 				print current_time
+
 			# else if timer is at 0 next_state
 			else if i <= 0 and state == true then
-
-				#TODO throw wrong thread on next_state
-				print " i <= 0 and state == true then"
-				print "previous_state : " + previous_state
-				print "current_state : " + current_state
 
 					#fix for avoid an another nanosleep 
 					if current_state != previous_state then
 
-					print "spot a different state so allow a next state"
-
-					previous_state = current_state
-
-					refresh_state
+						previous_state = current_state
+						refresh_state
 
 					end
 
-					refresh_clock(i)
-
+						refresh_clock(i)
 
 			else if is_killed == true then
 
@@ -85,9 +68,11 @@ class Timer
 				return "thread killed"
 
 			else
+
 				print "waiting..."
 
 			end
+
 		end
 
 	end
@@ -95,8 +80,6 @@ class Timer
 	fun refresh_clock(value : Int)
 	do
 
-		#warning label est une view
-		#clock_label.data = new ParameterData("clock", value.to_s)
 		var task = new RefreshViewTask(clock, value.to_s)
 		app.run_on_ui_thread(task)
 
