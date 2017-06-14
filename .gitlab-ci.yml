@@ -1,0 +1,11 @@
+build-linux:
+  script: make linux 
+  artifacts:
+    paths:
+      - bin/nitGains
+
+build-android:
+  script: make androidApk
+  artifacts:
+    paths:
+      - bin/nitGains
