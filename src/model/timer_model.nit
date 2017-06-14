@@ -1,3 +1,17 @@
+# This file is part of NIT ( http://www.nitlanguage.org ).
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 module timer_model
 
 import app::ui
@@ -8,7 +22,7 @@ import configurable_window
 import pthreads
 import app::http_request
 
-# Thread implementation for timer_thread(Clock,Time)
+# Thread using as a Timer 
 class Timer
 	super Thread
 
@@ -16,10 +30,6 @@ class Timer
 	var window: ConfigurableWindow
 	var clock : Clock = window.clock_label is lateinit
 	var current_time = 60 is writable
-	
-
-	#state true -> couting or next_state
-	#state false -> sleep
 	var state = false
 	var is_init = false is writable
 	var is_killed = false
@@ -39,7 +49,7 @@ class Timer
 			refresh_clock(i)
 			sys.nanosleep(1,0)
 
-			# continue to decrease i
+			# Counting
 			 if state == true and i>0 then
 				
 				i = i - 1
@@ -47,10 +57,10 @@ class Timer
 				current_time = i
 				print current_time
 
-			# else if timer is at 0 next_state
+			# Reach 0, call next_state
 			else if i <= 0 and state == true then
 
-					#fix for avoid an another nanosleep 
+					# Check with the main thread is refreshed
 					if current_state != previous_state then
 
 						previous_state = current_state
@@ -76,6 +86,7 @@ class Timer
 
 	end
 
+	# Set Clock value 
 	fun refresh_clock(value : Int)
 	do
 
@@ -84,6 +95,7 @@ class Timer
 
 	end
 
+	# Set current_state value
 	fun refresh_state
 	do
 
@@ -91,8 +103,6 @@ class Timer
 		app.run_on_ui_thread(task)
 
 	end
-
-
 
 	fun stop
 	do
@@ -130,6 +140,7 @@ class Timer
 
 end
 
+# Build a Task used by the main Thread for refresh the current_state
 class RefreshStateTask
 	super Task
 
@@ -144,6 +155,7 @@ class RefreshStateTask
 
 end
 
+# Build a Task used by the main Thread for refresh the Clock
 class RefreshViewTask
 	super Task
 
