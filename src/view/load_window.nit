@@ -28,7 +28,7 @@ class LoadWindow
 	super Window
 
 	var previous_window : ConfigurableWindow
-	var root_layout = new VerticalLayout(parent=self)
+	var root_layout = new ListLayout(parent=self)
 	var context_list_label = new Label(parent=root_layout)
 	var selected_save : String = "null"
 	var label_1 = new Label
@@ -39,23 +39,6 @@ class LoadWindow
 	init 
 	do 
 
-		var rows = [[""],[""],[""],[""],
-					[""],[""],[""],[""],
-					[""],[""],[""],[""],
-					[""],[""],[""],[""]]
-
-		for row in rows do
-
-			var rows_layout = new HorizontalLayout(parent= root_layout)
-
-			for button in row do
-
-				var button_view = new Button(parent=root_layout, text= button)
-				button_list.add button_view
-
-			end
-
-		end
 
 		# Saves is a SaveContext containing a HashMap of TabataContext
 		var saves = app.data_store["saves"].as(SaveContext)
@@ -64,7 +47,8 @@ class LoadWindow
 
 		for name, context in saves.map do 
 
-			button_list[i].text = name
+				var button_view = new Button(parent=root_layout, text= name)
+				button_list.add button_view
 
 			i = i + 1
 
