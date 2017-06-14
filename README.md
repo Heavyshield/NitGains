@@ -16,7 +16,7 @@
 ### android/
 - Graphic part specific for the android platform
 ### androidVersions/
-- Adapt the app at the target API (API 15 for the moment)
+- Adapt the app to the target API (API 15 for the moment)
 
 ## Compilation
 
